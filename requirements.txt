@@ -1,3 +1,5 @@
 streamlit
 langchain
 st-pages
+st-chat
+streamlit-authenticator
