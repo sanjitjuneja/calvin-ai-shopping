@@ -27,3 +27,54 @@
 # )
 
 # agent.run("Chat GPT, how do you feel now?")
+
+
+
+# model = ChatOpenAI(temperature=TEMP)
+# planner = load_chat_planner(model)
+# executor = load_agent_executor(model, tools, verbose=True)
+# agent = PlanAndExecute(planner=planner, executor=executor, verbose=True)
+
+
+
+# SIDEBAR: MODEL SETTINGS
+st.sidebar.progress(0)
+with st.sidebar.expander("🧠 Model Settings ", expanded=False):
+    # MODEL
+    MODEL = st.selectbox(
+        label="Model",
+        options=[
+            "gpt-3.5-turbo",
+        ],
+    )
+    # MODEL TEMPERATURE
+    TEMP = st.slider(
+        "Randomness", min_value=0.0, max_value=1.0, step=0.01, value=0.5, format='%f',
+    )
+
+# # SIDEBAR: APP SETTINGS
+# with st.sidebar.expander(" 🛠️ App Settings ", expanded=False):
+#     st.text("Settings")
+
+
+
+
+[[pages]]
+path = "app.py"
+name = "Home"
+icon = "🏠"
+
+[[pages]]
+path = "pages/calvin_sports.py"
+name = "Calvin (Sports)"
+icon = "🏀"
+
+[[pages]]
+path = "pages/felix_productivity.py"
+name = "Felix (Producivity)"
+icon = "👨‍💻"
+
+[[pages]]
+path = "pages/oscar_content_creation.py"
+name = "Oscar (Content Creation)"
+icon = "✍️"

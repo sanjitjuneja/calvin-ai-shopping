@@ -1,5 +1,10 @@
 streamlit
 langchain
-st-pages
 st-chat
 streamlit-authenticator
+google-search-results
+faiss-cpu
+
+
+
+st-pages
