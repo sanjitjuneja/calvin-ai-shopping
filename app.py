@@ -27,8 +27,14 @@ os.environ["SERPAPI_API_KEY"] = "fc35ee3159ee64b6f23fa05b2083b87e6a6ccd9178f961b
 
 
 # SETUP: PAGE CONFIGURATION
-st.set_page_config(page_title="Home", layout="centered")
-# show_pages_from_config()
+st.set_page_config(page_title="Calvin: AI Shopper", page_icon="assets/calvin.png", layout="centered", initial_sidebar_state="auto")
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
 # SETUP: INITIALIZE SESSION STATES
@@ -44,7 +50,7 @@ if "calvin_stored_session" not in st.session_state:
 
 # SETUP: APP LAYOUT CONFIGURATION
 st.image("assets/calvin.png", width=150)
-st.title("Calvin: Your Intelligent Shopper 🛍️")
+st.title("Calvin: Your AI Shopper 🛍️")
 if len(st.session_state["calvin_generated"]) > 0:
     status_bar = st.progress(100)
 else:
@@ -53,10 +59,11 @@ st.markdown(
     """ 
         > :black[**Hey There, I'm Calvin 👋**]
         > :black[*🛒 I'm your personal intelligent shopper, here to enhance your buying experience through AI.*]
-        > :black[*🧠 Plus, I can directly integrate with various plugins to guide you through every step of the way!*]
+        > :black[*🧠 Plus, I directly integrate with apps like Klarna to guide you through every step of the way!*]
         """
 )
 st.text("---")
+
 
 
 # FUNCTION: GET TEXT INPUT
@@ -96,22 +103,37 @@ def clear_history():
     del st.session_state.calvin_stored_session
 
 
-# SIDEBAR: STYLING
-st.sidebar.header("Welcome Sanjit 👋")
-st.sidebar.button("Logout", type="secondary")
+# SIDEBAR: APP INFO
+st.sidebar.header("Welcome Sanjit! 👋")
+st.sidebar.text("Use Calvin to help u shop!")
+st.sidebar.button("⌛️ Try Example", type="secondary") # TODO: Add onclick functionality
+with st.sidebar.expander("✍️ Prompt Examples", expanded=False):
+    st.text("Examples here")
 st.sidebar.progress(0)
 
-# SIDEBAR: NEW CHAT & CLEAR HISTORY BUTTON
-st.sidebar.button("New Chat", on_click=new_chat, type="primary")
-if st.session_state.calvin_stored_session:
-    st.sidebar.button("Clear History", on_click=clear_history, type="secondary")
 
+# SIDEBAR: CHAT HISTORY
+st.sidebar.header("Chat History")
+newChatBut, clearHistoryBut = st.sidebar.columns([0.5, 0.6])
+newChatBut.button("New Chat", on_click=new_chat, type="primary")
+if st.session_state.calvin_stored_session:
+    clearHistoryBut.button("Clear History", on_click=clear_history, type="secondary")
+st.sidebar.text(" ")
 
 # SIDEBAR: DISPLAY STORED SESSIONS
 if st.session_state.calvin_stored_session:
     for i, sublist in enumerate(st.session_state.calvin_stored_session):
         with st.sidebar.expander(label=f"Conversation {i+1}:"):
             st.write(sublist)
+# st.sidebar.progress(0)
+st.sidebar.text(" ")
+st.sidebar.progress(0)
+
+
+# SIDEBAR: ACCOUNT INFO
+logout, settings = st.sidebar.columns([0.5, 0.55])
+settings.button("⚙️ Settings", type="secondary") # TODO: Add settings functionality
+logout.button("✌️ Logout", type="secondary") # TODO: Add logout functionality
 
 
 
@@ -171,14 +193,14 @@ tools = [
 ]
 
 
-prefix = """You are Calvin, an AI Intelligent Shopper. You perform one task based on the following objective: {objective}. Take into account these previously completed tasks: {context}."""
-suffix = """Question: {task}
-{agent_scratchpad}"""
+prefix = """You are Calvin, an AI Intelligent Shopper. You perform one task based on the following objective: {objective}."""
+# suffix = """Question: {task}
+# {agent_scratchpad}"""
 prompt = ZeroShotAgent.create_prompt(
     tools,
     prefix=prefix,
-    suffix=suffix,
-    input_variables=["objective", "task", "context", "agent_scratchpad"],
+    suffix="",
+    input_variables=["objective"],
 )
 
 
