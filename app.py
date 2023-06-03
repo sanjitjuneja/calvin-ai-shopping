@@ -133,50 +133,110 @@ def try_example():
         exampleStr = "Find me a premium webcam good for video calls."
     st.session_state["calvin_input"] = exampleStr
 
-# TODO: Add Login/Register/Forgot Functionality, 
-# Hide chat history, user input, all sidebar info until logged in
+
+
+# SIDEBAR: AUTH CHECK
+name, authentication_status, username = authenticator.login('Login', 'sidebar')
+if authentication_status is False:
+    st.sidebar.error('Username/password is incorrect')
+elif authentication_status is None:
+    st.sidebar.warning('Please enter your username and password')
+    st.warning('👈 Please Use Sidebar To Login Or Register For Calvin')
+
+
+# SIDEBAR: REGISTER & FORGOT FORMS
+st.sidebar.text(" ")
+st.sidebar.text(" ")
+if authentication_status is False or authentication_status is None:
+    # REGISTER USER
+    with st.sidebar.expander("📝 Register", expanded=False):
+        try:
+            if authenticator.register_user('Register user', preauthorization=False):
+                st.success('User registered successfully')
+                with open('config.yaml', 'w') as file:
+                    yaml.dump(config, file, default_flow_style=False)
+        except Exception as e:
+            st.error(e)
+    with st.sidebar.expander("🤷‍♂️ Forgot Password/Username", expanded=False):
+        # FORGOT PASSWORD
+        try:
+            username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password('Forgot password')
+            if username_forgot_pw:
+                st.success('New Temporary Password: ' + random_password)
+                with open('config.yaml', 'w') as file:
+                    yaml.dump(config, file, default_flow_style=False)
+            else:
+                st.error('Username not found')
+        except Exception as e:
+            st.error(e)
+        # FORGOT USERNAME
+        try:
+            username_forgot_username, email_forgot_username = authenticator.forgot_username('Forgot username')
+            if username_forgot_username:
+                st.success('Username: ' + username_forgot_username)
+                with open('config.yaml', 'w') as file:
+                    yaml.dump(config, file, default_flow_style=False)
+            else:
+                st.error('Email not found')
+        except Exception as e:
+            st.error(e)
+
 
 # SIDEBAR: APP INFO
-st.sidebar.header("Welcome Sanjit! 👋") # TODO: Add user's name
-st.sidebar.markdown(""":black[Use Calvin to help you shop!]""")
-st.sidebar.button("⌛️ Try Example", on_click=try_example, type="secondary")
-with st.sidebar.expander("✍️ Prompt Examples", expanded=False):
-    st.markdown(
-    """ 
-        :black[For Best Results, Use An Objective Format:\n]
-        ------
-        :black[1. *"Find me a premium webcam good for video calls."*]
-        :black[2. *"Search for the iPhone 14 Pro case with the most value."*]
-        :black[3. *"Formulate a shopping cart with all designer items with a total less than $1000"*]
-        """
-    )
-st.sidebar.progress(0)
+if authentication_status:
+    st.sidebar.header("Welcome " + name + "! 👋")
+    st.sidebar.markdown(""":black[Use Calvin to help you shop!]""")
+    st.sidebar.button("⌛️ Try Example", on_click=try_example, type="secondary")
+    with st.sidebar.expander("✍️ Prompt Examples", expanded=False):
+        st.markdown(
+        """ 
+            :black[For Best Results, Use An Objective Format:\n]
+            ------
+            :black[1. *"Find me a premium webcam good for video calls."*]
+            :black[2. *"Search for the iPhone 14 Pro case with the most value."*]
+            :black[3. *"Formulate a shopping cart with all designer items with a total less than $1000"*]
+            """
+        )
+    st.sidebar.progress(0)
 
 
 # SIDEBAR: CHAT HISTORY
-st.sidebar.header("Chat History")
-newChatBut, clearHistoryBut = st.sidebar.columns([0.5, 0.6])
-newChatBut.button("New Chat", on_click=new_chat, type="primary")
-if st.session_state.calvin_stored_session:
-    clearHistoryBut.button("Clear History", on_click=clear_history, type="secondary")
-st.sidebar.text(" ")
+if authentication_status:
+    st.sidebar.header("Chat History")
+    newChatBut, clearHistoryBut = st.sidebar.columns([0.5, 0.6])
+    newChatBut.button("New Chat", on_click=new_chat, type="primary")
+    if st.session_state.calvin_stored_session:
+        clearHistoryBut.button("Clear History", on_click=clear_history, type="secondary")
+    st.sidebar.text(" ")
 
-# SIDEBAR: DISPLAY STORED SESSIONS
-if st.session_state.calvin_stored_session:
-    for i, sublist in enumerate(st.session_state.calvin_stored_session):
-        with st.sidebar.expander(label=f"Conversation {i+1}:"):
-            st.write(sublist)
-        # TODO: Add button to re-load session data & chat in main window
-# st.sidebar.progress(0)
-st.sidebar.text(" ")
-st.sidebar.progress(0)
+    # SIDEBAR: DISPLAY STORED SESSIONS
+    if st.session_state.calvin_stored_session:
+        for i, sublist in enumerate(st.session_state.calvin_stored_session):
+            with st.sidebar.expander(label=f"Conversation {i+1}:"):
+                st.write(sublist)
+    # st.sidebar.progress(0)
+    st.sidebar.text(" ")
+    st.sidebar.progress(0)
 
 
-# SIDEBAR: ACCOUNT INFO
-logout, settings = st.sidebar.columns([0.5, 0.55])
-settings.button("⚙️ Settings", type="secondary") # TODO: Add settings functionality
-logout.button("✌️ Logout", type="secondary") # TODO: Add logout functionality
-
+# SIDEBAR: ACCOUNT SETTINGS & LOGOUT
+if authentication_status:
+    with st.sidebar.expander("⚙️ Account", expanded=False):
+        try:
+            if authenticator.update_user_details(username, 'Update user details'):
+                st.success('Entries updated successfully')
+                with open('config.yaml', 'w') as file:
+                    yaml.dump(config, file, default_flow_style=False)
+        except Exception as e:
+            st.error(e)
+        try:
+            if authenticator.reset_password(username, 'Reset password'):
+                st.success('Password modified successfully')
+                with open('config.yaml', 'w') as file:
+                    yaml.dump(config, file, default_flow_style=False)
+        except Exception as e:
+            st.error(e)
+    authenticator.logout('✌️ Logout', 'sidebar')
 
 
 
@@ -265,14 +325,15 @@ def small():
     st.session_state["calvin_input"] = calvin_user_input
 
 # MAIN: USER INPUT
-calvin_user_input = st.text_input(
-    "Ask Calvin Anything:",
-    st.session_state["calvin_input"],
-    key="input",
-    placeholder="Type Here...",
-    label_visibility="hidden",
-    on_change=small
-)
+if authentication_status:
+    calvin_user_input = st.text_input(
+        "Ask Calvin Anything:",
+        st.session_state["calvin_input"],
+        key="input",
+        placeholder="Type Here...",
+        label_visibility="hidden",
+        on_change=small
+    )
 
 
 # MAIN: PROCESS USER INPUT
@@ -304,7 +365,7 @@ if st.session_state["calvin_input"] != "":
 
 
 # MAIN: DISPLAY CHAT HISTORY
-if st.session_state["calvin_generated"]:
+if authentication_status and st.session_state["calvin_generated"]:
     for i in range(len(st.session_state["calvin_generated"])-1, -1, -1):
         message(st.session_state["calvin_generated"][i], key=str(i))
         message(st.session_state["calvin_past"][i], is_user=True, key=str(i)+"_user")
