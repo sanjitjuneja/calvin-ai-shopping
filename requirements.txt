@@ -1,6 +1,6 @@
 streamlit
 langchain
-st-chat
+streamlit-chat
 streamlit-authenticator
 google-search-results
 faiss-cpu
