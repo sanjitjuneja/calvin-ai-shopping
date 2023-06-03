@@ -7,10 +7,10 @@ credentials:
     sanjit:
       email: sanjit@gmail.com
       name: John Smith
-      password: $2b$12$MQ54XLPVtrVDKaBsjLJxouNITqQdiKxvN2CI46fDWQz2ihD3J9O/O
+      password: $2b$12$4kUZ04EDMquIaVlRnUeTYuVo9E0BoN0MLqz54SE6sI.fHjyWTGKau
     sanjitjuneja:
       email: sanjit.j55@gmail.com
       name: Sanjit Juneja
       password: $2b$12$qr/H/1vRUb8M.0RUQIfNFu2P8aHpapRiJxZWmcqY5M9O143.ercX.
 preauthorized:
-  emails:
+  emails: null

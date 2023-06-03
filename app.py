@@ -22,20 +22,16 @@ from langchain.agents import ZeroShotAgent, Tool, AgentExecutor
 from langchain import OpenAI, SerpAPIWrapper, LLMChain
 from langchain.experimental import BabyAGI
 
-# API KEYS
-os.environ["OPENAI_API_KEY"] = "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"
-os.environ["SERPAPI_API_KEY"] = "fc35ee3159ee64b6f23fa05b2083b87e6a6ccd9178f961b2e4196ce5f7b510ae"
-
 
 # SETUP: PAGE CONFIGURATION
 st.set_page_config(page_title="Calvin: AI Shopper", page_icon="assets/calvin.png", layout="centered", initial_sidebar_state="auto")
-hide_streamlit_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+# hide_streamlit_style = """
+#             <style>
+#             #MainMenu {visibility: hidden;}
+#             footer {visibility: hidden;}
+#             </style>
+#             """
+# st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
 
@@ -53,6 +49,7 @@ authenticator = stauth.Authenticate(
     config['cookie']['expiry_days'],
     config['preauthorized']
 )
+name, authentication_status, username = authenticator.login('Login', 'sidebar')
 
 
 # SETUP: INITIALIZE SESSION STATES
@@ -136,12 +133,11 @@ def try_example():
 
 
 # SIDEBAR: AUTH CHECK
-name, authentication_status, username = authenticator.login('Login', 'sidebar')
 if authentication_status is False:
     st.sidebar.error('Username/password is incorrect')
 elif authentication_status is None:
     st.sidebar.warning('Please enter your username and password')
-    st.warning('👈 Please Use Sidebar To Login Or Register For Calvin')
+    st.warning('👈 Please Use Sidebar To Login/Register To Use Calvin')
 
 
 # SIDEBAR: REGISTER & FORGOT FORMS
@@ -203,24 +199,25 @@ if authentication_status:
 # SIDEBAR: CHAT HISTORY
 if authentication_status:
     st.sidebar.header("Chat History")
-    newChatBut, clearHistoryBut = st.sidebar.columns([0.5, 0.6])
-    newChatBut.button("New Chat", on_click=new_chat, type="primary")
+    # newChatBut, clearHistoryBut = st.sidebar.columns([0.7, 0.7])
+    st.sidebar.button("New Chat", on_click=new_chat, type="primary")
     if st.session_state.calvin_stored_session:
-        clearHistoryBut.button("Clear History", on_click=clear_history, type="secondary")
+        st.sidebar.button("Clear History", on_click=clear_history, type="secondary")
     st.sidebar.text(" ")
 
     # SIDEBAR: DISPLAY STORED SESSIONS
     if st.session_state.calvin_stored_session:
         for i, sublist in enumerate(st.session_state.calvin_stored_session):
-            with st.sidebar.expander(label=f"Conversation {i+1}:"):
+            with st.sidebar.expander(label=sublist[0][5:]):
                 st.write(sublist)
-    # st.sidebar.progress(0)
     st.sidebar.text(" ")
     st.sidebar.progress(0)
 
 
 # SIDEBAR: ACCOUNT SETTINGS & LOGOUT
 if authentication_status:
+    st.sidebar.text(" ")
+    authenticator.logout('✌️ Logout', 'sidebar')
     with st.sidebar.expander("⚙️ Account", expanded=False):
         try:
             if authenticator.update_user_details(username, 'Update user details'):
@@ -236,7 +233,6 @@ if authentication_status:
                     yaml.dump(config, file, default_flow_style=False)
         except Exception as e:
             st.error(e)
-    authenticator.logout('✌️ Logout', 'sidebar')
 
 
 
