@@ -4,7 +4,3 @@ st-chat
 streamlit-authenticator
 google-search-results
 faiss-cpu
-
-
-
-st-pages

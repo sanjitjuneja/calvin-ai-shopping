@@ -1,0 +1,13 @@
+credentials:
+  usernames:
+    sanjitjuneja:
+      email: sanjit.j55@gmail.com
+      name: Sanjit Juneja
+      password: $2b$12$Q37tSmPPspzwTV.wVQUHHeGpXVpazUxcU4bOafoJXLUiDnYBAdNHi
+cookie:
+  expiry_days: 0
+  key: verbyl-chabot-signature-key
+  name: some_cookie_name
+preauthorized:
+  emails:
+  - junejasanjit.1234@gmail.com
