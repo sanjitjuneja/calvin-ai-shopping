@@ -96,7 +96,6 @@ st.markdown(
 )
 st.text("---")
 
-
 # FUNCTION: START A NEW CHAT
 def new_chat():
     """
@@ -105,8 +104,8 @@ def new_chat():
     if st.session_state["responses"]:
         save = []
         for i in range(len(st.session_state["responses"]) - 1, -1, -1):
-            save.append("User:" + st.session_state["prompts"][i])
-            save.append("Bot:" + st.session_state["responses"][i])
+            save.append("User:" + str(st.session_state["prompts"][i]))
+            save.append("Bot:" + str(st.session_state["responses"][i]))
         st.session_state["stored_sessions"].append(save)
         conn = sqlite3.connect('data.db', check_same_thread=False)
         c = conn.cursor()
@@ -222,9 +221,9 @@ if authentication_status:
 
     # SIDEBAR: DISPLAY STORED SESSIONS
     if st.session_state.stored_sessions:
-        for i, sublist in enumerate(st.session_state.stored_sessions):  
+        for i in range(len(st.session_state.stored_sessions) - 1, -1, -1):
             with st.sidebar.expander(label=f"Conversation {i+1}", expanded=False):
-                st.write(sublist)
+                st.write(st.session_state.stored_sessions[i])
     st.sidebar.text(" ")
     st.sidebar.progress(0)
 
@@ -306,14 +305,14 @@ tools = [
 ]
 
 
-prefix = """You are Calvin, an AI Intelligent Shopper who enhances people's buying experience when shopping online. You perform one task based on the following objective: {objective}."""
-# suffix = """Question: {task}
-# {agent_scratchpad}"""
+prefix = """You are Calvin, an AI Intelligent Shopper who enhances people's buying experience when shopping online. You perform one task based on the following objective: {objective}. Take into account these previously completed tasks: {context}."""
+suffix = """Question: {task}
+{agent_scratchpad}"""
 prompt = ZeroShotAgent.create_prompt(
     tools,
     prefix=prefix,
-    suffix="",
-    input_variables=["objective"],
+    suffix=suffix,
+    input_variables=["objective", "task", "context", "agent_scratchpad"],
 )
 
 
