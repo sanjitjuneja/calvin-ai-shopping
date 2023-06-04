@@ -26,12 +26,12 @@ from langchain.experimental import BabyAGI
 import yaml
 from yaml.loader import SafeLoader
 
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = "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"
 os.environ["SERPAPI_API_KEY"] = "fc35ee3159ee64b6f23fa05b2083b87e6a6ccd9178f961b2e4196ce5f7b510ae"
 
 
 # SETUP: PAGE CONFIGURATION
-st.set_page_config(page_title="Calvin: AI Shopper", page_icon="assets/calvin.png", layout="centered", initial_sidebar_state="auto")
+st.set_page_config(page_title="Calvin: AI Shopper", page_icon="assets/calvin.png", layout="centered", initial_sidebar_state="auto") 
 hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -76,8 +76,8 @@ if authentication_status:
         st.session_state["prompts"] = c.execute("""SELECT prompt FROM prompts WHERE username = ?""", (username,)).fetchall()
     if "stored_sessions" not in st.session_state:
         st.session_state["stored_sessions"] = c.execute("""SELECT sessions FROM stored_sessions WHERE username = ?""", (username,)).fetchall()
-    if "user_input" not in st.session_state:
-        st.session_state["user_input"] = ""
+    if "disableWarning" not in st.session_state:
+        st.session_state["disableWarning"] = False
     conn.close()
 
 # SETUP: APP LAYOUT CONFIGURATION
@@ -116,7 +116,6 @@ def new_chat():
         conn.close()
         st.session_state["responses"] = []
         st.session_state["prompts"] = []
-        st.session_state["user_input"] = ""
 
 
 # FUNCTION: CLEAR CHAT HISTORY
@@ -143,7 +142,7 @@ def try_example():
         example_prompt = "Formulate a shopping cart with all designer items with a total less than $1000"
     else:
         example_prompt = "Find me a premium webcam good for video calls."
-    st.session_state["user_input"] = example_prompt
+    main(example_prompt)
 
 
 
@@ -208,7 +207,7 @@ if authentication_status:
             :black[3. *"Formulate a shopping cart with all designer items with a total less than $1000"*]
             """
         )
-    st.sidebar.progress(0)
+    st.sidebar.progress(100)
 
 
 # SIDEBAR: CHAT HISTORY
@@ -225,14 +224,14 @@ if authentication_status:
             with st.sidebar.expander(label=f"Conversation {i+1}", expanded=False):
                 st.write(st.session_state.stored_sessions[i])
     st.sidebar.text(" ")
-    st.sidebar.progress(0)
+    st.sidebar.progress(100)
 
 
 # SIDEBAR: ACCOUNT SETTINGS & LOGOUT
 if authentication_status:
     st.sidebar.text(" ")
     authenticator.logout('✌️ Logout', 'sidebar')
-    with st.sidebar.expander("⚙️ Account", expanded=False):
+    with st.sidebar.expander("⚙️ Account Settings", expanded=False):
         try:
             if authenticator.update_user_details(username, 'Update user details'):
                 st.success('Entries updated successfully')
@@ -284,7 +283,7 @@ klarna_agent_chain = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REAC
 
 
 
-# MAIN: SETUP Calvin
+# MAIN: SETUP CALVIN
 llm = OpenAI(temperature=0)
 tools = [
     Tool(
@@ -323,61 +322,72 @@ llm_chain = LLMChain(llm=llm, prompt=prompt)
 tool_names = [tool.name for tool in tools]
 agent = ZeroShotAgent(llm_chain=llm_chain, allowed_tools=tool_names)
 agent_executor = AgentExecutor.from_agent_and_tools(
-    agent=agent, tools=tools, verbose=False
+    agent=agent, tools=tools, verbose=True
 )
-verbose = False
-max_iterations: Optional[int] = 3
+verbose = True
+max_iterations: Optional[int] = 1
 calvin = BabyAGI.from_llm(
     llm=llm, vectorstore=vectorstore, task_execution_chain=agent_executor, verbose=verbose, max_iterations=max_iterations
 )
 
-def small():
-    st.session_state["user_input"] = text_input
-
-# MAIN: USER INPUT
-if authentication_status:
-    text_input = st.text_input(
-        "Ask Calvin Anything:",
-        st.session_state["user_input"],
-        key="input",
-        placeholder="Type Here...",
-        label_visibility="hidden",
-        on_change=small
-    )
 
 
-# MAIN: PROCESS USER INPUT
-if authentication_status and st.session_state["user_input"] != "":
+
+# MAIN: RUN CALVIN
+def main(specific_prompt: str = None):
+    if text_input == "" and specific_prompt is None:
+        st.session_state["disableWarning"] = True
+        return
+    st.session_state["disableWarning"] = False
+    # retrieve input
+    cur_prompt = specific_prompt if specific_prompt is not None else text_input
+    
     # Update status bar
-    for i in range(25):
-        status_bar.progress(i, text="Sending...")
-        time.sleep(0.05)
+    for i in range(30):
+        status_bar.progress(i, text="Sending " + "'" + cur_prompt[0:100] + "'...")
+        time.sleep(0.1)
     st.text(" ")
 
     # Get response
-    response = "This would be Calvin's response."
-    # response = calvin({"objective": st.session_state["user_input"]]})
+    status_bar.progress(30, text="Planning & Executing...")
+    response = calvin({"objective": cur_prompt})
 
     # Update status bar
-    for i in range(15, 100):
+    for i in range(30, 100):
         status_bar.progress(i, text="Generating...")
         time.sleep(0.02)
     status_bar.progress(100)
 
     # Save response
     st.session_state["responses"].append(response)
-    st.session_state["prompts"].append(st.session_state["user_input"])
+    st.session_state["prompts"].append(cur_prompt)
     conn = sqlite3.connect('data.db', check_same_thread=False)
     c = conn.cursor()
-    c.execute("""INSERT INTO responses VALUES (?, ?)""", (username, response))
-    c.execute("""INSERT INTO prompts VALUES (?, ?)""", (username, st.session_state["user_input"]))
+    c.execute("""INSERT INTO responses VALUES (?, ?)""", (username, str(response)))
+    c.execute("""INSERT INTO prompts VALUES (?, ?)""", (username, str(cur_prompt)))
     conn.commit()
     conn.close()
 
-    # Reset user input
-    st.session_state["user_input"] = ""
+st.text(st.session_state["responses"])
 
 
+# SUBMIT BUTTON
+if authentication_status:
+    with st.form("submit_user_input", clear_on_submit=True):
+        input, submit = st.columns([4, 1])
+        text_input = input.text_input(
+            "Ask Calvin Anything:",
+            key="input",
+            placeholder="Type Here...",
+            label_visibility="collapsed",
+        )
+        submit.form_submit_button(label="Submit", on_click=main, type="primary", use_container_width=True)
+
+
+# MAIN: DISPLAY EMPTY PROMPT WARNING
+if authentication_status and st.session_state["disableWarning"]:
+    st.warning("Please Enter A Prompt")
+    st.text(" ")
 
 
 # MAIN: DISPLAY CHAT HISTORY
