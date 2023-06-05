@@ -1,7 +1,6 @@
 openai
 streamlit
 langchain
-streamlit-chat
 streamlit-authenticator
 google-search-results
 faiss-cpu
